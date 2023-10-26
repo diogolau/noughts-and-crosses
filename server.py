@@ -2,8 +2,11 @@ import socket
 import sys
 import selectors
 import types
+import json
 
 def main():
+    LIMIT_CONNECTIONS = 2
+
     sel = selectors.DefaultSelector()
 
     HOST, PORT = sys.argv[1], int(sys.argv[2])
@@ -15,20 +18,26 @@ def main():
     listening_socket.setblocking(False)
 
     sel.register(listening_socket, selectors.EVENT_READ, data=None)
+    
     try:
         while True:
             events = sel.select(timeout=None)
             for key, mask in events:
                 if key.data is None:
-                    def accept_wrapper(sock):
-                        conn, addr = sock.accept()
-                        print(f"Accepted connection from {addr}")
-                        conn.setblocking(False)
-                        data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
-                        events = selectors.EVENT_READ | selectors.EVENT_WRITE
-                        sel.register(conn, events, data)
+                    def accept_wrapper(sock, events):
+                        if len(events) < LIMIT_CONNECTIONS:
+                            conn, addr = sock.accept()
+                            print(f"Accepted connection from {addr}")
+                            conn.setblocking(False)
+                            data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
+                            events = selectors.EVENT_READ | selectors.EVENT_WRITE
+                            sel.register(conn, events, data)
+                        else:
+                            conn, addr = sock.accept()
+                            print(f"Reject connection from {addr}")
+                            conn.close()
                     
-                    accept_wrapper(key.fileobj)
+                    accept_wrapper(key.fileobj, events)
                 else:
                     def service_connection(key, mask):
                         sock = key.fileobj
@@ -44,8 +53,12 @@ def main():
                         if mask & selectors.EVENT_WRITE:
                             if data.outb:
                                 print(f"Echoing {data.outb!r} to {data.addr}")
-                                sent = sock.send(data.outb)
-                                data.outb = data.outb[sent:]
+                                str_dict = json.loads(data.outb)
+                                print(str_dict["data"])
+                                if "type" in str_dict.keys():
+                                    sock.send(str_dict["data"].encode())
+                                data.outb = b""
+                                
                     
                     service_connection(key, mask)
     except KeyboardInterrupt:
@@ -53,8 +66,6 @@ def main():
     finally:
         sel.close()
         listening_socket.close()
-
-
 
 
 if __name__ == "__main__":

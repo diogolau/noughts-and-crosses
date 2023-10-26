@@ -1,16 +1,24 @@
 import socket
+import json
 
-HOST = "172.15.5.226"
+HOST = "127.0.0.1"
 PORT = 60000
 
-with socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM) as client:
+try:
+    client = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
     client.connect((HOST, PORT))
-    message = input("Type your message to get an echo: ")
     while True:
-        message = input("Type your message to get an echo: ")
-        if message == "q":
+        data = input("Type your message to get an echo: ")
+        if data == "q":
             break
-        b_message = message.encode()
+        message = {
+            "type": 0,
+            "data": data
+        }
+
+        b_message = (json.dumps(message)).encode()
         client.sendall(b_message)
         data = client.recv(1024)
         print(data.decode())
+except KeyboardInterrupt:
+    client.close()
