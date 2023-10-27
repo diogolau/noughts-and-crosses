@@ -1,21 +1,13 @@
-from controller import Controller
 import socket
 import sys
 import selectors
-import types
-
-
+from controller import Controller
 
 
 def main():
     initiate_server(sys.argv[1], sys.argv[2])
 
 def initiate_server(host, port):
-    LIMIT_CONNECTIONS = 2
-    SERVER_STATE = "000000000000000000"
-    SYMBOLS = [0, 1]
-    PLAYER_IDENTIFIER = {}
-
     sel = selectors.DefaultSelector()
 
     HOST, PORT = host, int(port)
