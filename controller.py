@@ -2,7 +2,7 @@ import socket
 import selectors
 import types
 import json
-from utils.json_utils import binary_to_json
+from utils.json_utils import binary_to_json, json_to_binary
 
 class Controller:
     connection_limit = 2
@@ -22,8 +22,19 @@ class Controller:
             data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
             events = selectors.EVENT_READ | selectors.EVENT_WRITE
             selector.register(conn, events, data)
+            token_message = {
+                "type": 0,
+                "token": self.player_identifier[conn.fileno()]
+            }
+            b_message = json_to_binary(token_message)
+            conn.send(b_message)
         else:
             conn, addr = sock.accept()
+            error_message = {
+                "type": -1
+            }
+            b_message = json_to_binary(error_message)
+            conn.send(b_message)
             print(f"Reject connection from {addr}")
             conn.close()
 
@@ -49,21 +60,24 @@ class Controller:
                     sock.send(str_dict["data"].encode())
                 data.outb = b""
 
-    def type_handler(self, key, mask, selector):
+    def type_handler(self, key, mask, selector, events):
         sock = key.fileobj
         data = key.data
         if mask & selectors.EVENT_READ:
             recv_data = sock.recv(1024)
             if recv_data:
-                request = binary_to_json(recv_data)
-                type = request["type"]
                 # From now on, add cases for each type that call another method.
                 # Remember to pass the socket and data for each method.
                 # Look up at Controller.service_connection to use it as an example,
                 # the above method is an echo.
                 # Be careful with how many bytes a socket will receive when using
                 # socket.recv(num_of_bytes) method.
-                data.outb += b"Processing request. Please, wait."
+                request = binary_to_json(recv_data)
+                type = request["type"]
+                if type == 0:
+                    self.accept_wrapper(sock, events, selector)
+                elif type == 1:
+                    self.service_connection(key, mask, selector)
             else:
                 print(f"Closing connection to {data.addr}")
                 Controller.symbols.append(self.player_identifier[sock.fileno()])
