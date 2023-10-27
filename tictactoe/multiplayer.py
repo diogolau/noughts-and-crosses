@@ -136,6 +136,7 @@ class TicTacToe:
             if i == 1:
                 return replace_indexes(EMPTY_BOARD, [0, 4, 8], '1')
             return replace_indexes(EMPTY_BOARD, [2, 4, 6], '1')
+        return EMPTY_BOARD
     
     def build_response(self):
         next_board = self.get_board()
