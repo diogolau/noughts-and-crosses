@@ -2,6 +2,7 @@ import socket
 import selectors
 import types
 import json
+from utils.json_utils import binary_to_json
 
 class Controller:
     connection_limit = 2
@@ -54,7 +55,7 @@ class Controller:
         if mask & selectors.EVENT_READ:
             recv_data = sock.recv(1024)
             if recv_data:
-                request = self.json_formatter(recv_data)
+                request = binary_to_json(recv_data)
                 type = request["type"]
                 # From now on, add cases for each type that call another method.
                 # Remember to pass the socket and data for each method.
@@ -73,10 +74,4 @@ class Controller:
             if data.outb:
                 sent = sock.send(data.outb)
                 data.outb = data.outb[sent:]
-                
-                    
-                
-    def json_formatter(self, message):
-        json_message = json.loads(message)
-
-        return json_message
+    
