@@ -1,6 +1,5 @@
 import socket
-import json
-from utils.json_utils import binary_to_json
+from utils.json_utils import binary_to_json, json_to_binary
 
 HOST = "127.0.0.1"
 PORT = 60000
@@ -10,31 +9,29 @@ try:
     client.connect((HOST, PORT))
     json_config = client.recv(1024)
     json_message = binary_to_json(json_config)
-    if json_message["type"] == -1:
+    if not json_message["connection"]:
         raise KeyboardInterrupt
     
     token = json_message["token"]
     
-    data = None
+    play = None
     while True:
-        if data == 'q':
-            break
-        if data == 'g':
+        if play == 'q':
+            raise KeyboardInterrupt
+        elif play:
             message = {
-                "type": 0
-            }
-            b_message = (json.dumps(message)).encode()
-            client.sendall(b_message)
-            data = client.recv(1024)
-            print(data)
-        else:
-            message = {
-                "type": 1,
                 "token": token,
-                "data": data
+                "play": play
             }
+            b_message = json_to_binary(message)
+            client.sendall(b_message)
+            response = binary_to_json(client.recv(1024))
+            print(response["status"])
 
-        data = input("Play: ")
+        else:
+            pass
+
+        play = input("Play: ")
 
         
 except KeyboardInterrupt:

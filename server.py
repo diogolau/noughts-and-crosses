@@ -30,7 +30,7 @@ def initiate_server(host, port):
                     con.accept_wrapper(key.fileobj, events, sel)
                 else:
                     # con.service_connection(key, mask, sel)
-                    con.type_handler(key, mask, sel, events)
+                    con.message_handler(key, mask, sel, events)
     except KeyboardInterrupt:
         print("Exiting")
     finally:

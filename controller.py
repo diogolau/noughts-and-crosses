@@ -1,4 +1,3 @@
-import socket
 import selectors
 import types
 import json
@@ -23,7 +22,7 @@ class Controller:
             events = selectors.EVENT_READ | selectors.EVENT_WRITE
             selector.register(conn, events, data)
             token_message = {
-                "type": 0,
+                "connection": True,
                 "token": self.player_identifier[conn.fileno()]
             }
             b_message = json_to_binary(token_message)
@@ -31,36 +30,14 @@ class Controller:
         else:
             conn, addr = sock.accept()
             error_message = {
-                "type": -1
+                "connection": False
             }
             b_message = json_to_binary(error_message)
             conn.send(b_message)
             print(f"Reject connection from {addr}")
             conn.close()
-
-    def service_connection(self, key, mask, selector):
-        sock = key.fileobj
-        data = key.data
-        if mask & selectors.EVENT_READ:
-            recv_data = sock.recv(1024)
-            if recv_data:
-                data.outb += recv_data
-            else:
-                print(f"Closing connection to {data.addr}")
-                Controller.symbols.append(self.player_identifier[sock.fileno()])
-                del(self.player_identifier[sock.fileno()])
-                selector.unregister(sock)
-                sock.close()
-        if mask & selectors.EVENT_WRITE:
-            if data.outb:
-                print(f"Echoing {data.outb!r} to {data.addr}")
-                str_dict = json.loads(data.outb)
-                print(str_dict["data"])
-                if str_dict:
-                    sock.send(str_dict["data"].encode())
-                data.outb = b""
-
-    def type_handler(self, key, mask, selector, events):
+    
+    def message_handler(self, key, mask, selector, events):
         sock = key.fileobj
         data = key.data
         if mask & selectors.EVENT_READ:
@@ -73,19 +50,23 @@ class Controller:
                 # Be careful with how many bytes a socket will receive when using
                 # socket.recv(num_of_bytes) method.
                 request = binary_to_json(recv_data)
-                type = request["type"]
-                if type == 0:
-                    self.accept_wrapper(sock, events, selector)
-                elif type == 1:
-                    self.service_connection(key, mask, selector)
+                self.service_connection(sock, request) 
             else:
                 print(f"Closing connection to {data.addr}")
                 Controller.symbols.append(self.player_identifier[sock.fileno()])
                 del(self.player_identifier[sock.fileno()])
                 selector.unregister(sock)
                 sock.close()
-        if mask & selectors.EVENT_WRITE:
-            if data.outb:
-                sent = sock.send(data.outb)
-                data.outb = data.outb[sent:]
+
+    def service_connection(self, socket, request):
+        if "play" in request.keys():
+            response = {
+                "next_board": '000000000000000000',
+                "status": '00',
+                "colored_board": "000000000"
+            }
+            socket.send(json_to_binary(response))
+
+
+    
     
