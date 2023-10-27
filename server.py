@@ -1,12 +1,24 @@
+from controller import Controller
 import socket
 import sys
 import selectors
 import types
 
+
+
+
 def main():
+    initiate_server(sys.argv[1], sys.argv[2])
+
+def initiate_server(host, port):
+    LIMIT_CONNECTIONS = 2
+    SERVER_STATE = "000000000000000000"
+    SYMBOLS = [0, 1]
+    PLAYER_IDENTIFIER = {}
+
     sel = selectors.DefaultSelector()
 
-    HOST, PORT = sys.argv[1], int(sys.argv[2])
+    HOST, PORT = host, int(port)
 
     listening_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
     listening_socket.bind((HOST, PORT))
@@ -15,47 +27,23 @@ def main():
     listening_socket.setblocking(False)
 
     sel.register(listening_socket, selectors.EVENT_READ, data=None)
+
+    con = Controller()
+    
     try:
         while True:
             events = sel.select(timeout=None)
             for key, mask in events:
-                if key.data is None:
-                    def accept_wrapper(sock):
-                        conn, addr = sock.accept()
-                        print(f"Accepted connection from {addr}")
-                        conn.setblocking(False)
-                        data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
-                        events = selectors.EVENT_READ | selectors.EVENT_WRITE
-                        sel.register(conn, events, data)
-                    
-                    accept_wrapper(key.fileobj)
+                if key.data is None:                    
+                    con.accept_wrapper(key.fileobj, events, sel)
                 else:
-                    def service_connection(key, mask):
-                        sock = key.fileobj
-                        data = key.data
-                        if mask & selectors.EVENT_READ:
-                            recv_data = sock.recv(1024)
-                            if recv_data:
-                                data.outb += recv_data
-                            else:
-                                print(f"Closing connection to {data.addr}")
-                                sel.unregister(sock)
-                                sock.close()
-                        if mask & selectors.EVENT_WRITE:
-                            if data.outb:
-                                print(f"Echoing {data.outb!r} to {data.addr}")
-                                sent = sock.send(data.outb)
-                                data.outb = data.outb[sent:]
-                    
-                    service_connection(key, mask)
+                    # con.service_connection(key, mask, sel)
+                    con.type_handler(key, mask, sel)
     except KeyboardInterrupt:
         print("Exiting")
     finally:
         sel.close()
         listening_socket.close()
-
-
-
 
 if __name__ == "__main__":
     main()
