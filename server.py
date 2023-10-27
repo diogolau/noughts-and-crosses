@@ -11,7 +11,7 @@ def main():
 def initiate_server(host, port):
     LIMIT_CONNECTIONS = 2
     SERVER_STATE = "000000000000000000"
-    SYMBOLS = ["X", "O"]
+    SYMBOLS = [0, 1]
     PLAYER_IDENTIFIER = {}
 
     sel = selectors.DefaultSelector()
