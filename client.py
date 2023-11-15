@@ -33,11 +33,9 @@ try:
         while True:
             response_binary = client.recv(1024)
             response = binary_to_dict(response_binary)
-            print(response)
-            if "next_board" in response.keys():
-                next_board = response["next_board"]
-                update_board(next_board)
-                color_the_board(response)
+            next_board = response["next_board"]
+            update_board(next_board)
+            color_the_board(response)
     
     create_thread(receive_data)
 
@@ -73,21 +71,34 @@ try:
 
     def update_board(next_board_str):
         global board
+        print(next_board_str)
         next_board = [*next_board_str]
 
-        for index, button_state in enumerate(next_board):
-            if index <= 8:
-                symbol = "X"
-            else:
-                symbol = "O"
+        board_x = next_board[:9]
+        board_o = next_board[9:]
 
-            index_button = index % 9
+        updated_buttons = []
 
+        def update_button(symbol, index, update_x=False):
+            index_button = index
+            row = math.floor(index_button/3)
+            col = index_button % 3
+        
             if int(button_state):
-                row = math.floor(index_button/3)
-                col = index_button % 3
-
                 buttons[row][col].config(text=symbol)
+            elif index not in updated_buttons:
+                buttons[row][col].config(text='')
+
+            if update_x:
+                updated_buttons.append(index)
+
+        for index, button_state in enumerate(board_x):
+            symbol = "X"
+            update_button(symbol, index, update_x=True)
+                
+        for index, button_state in enumerate(board_o):
+            symbol = "O"
+            update_button(symbol, index)
 
         board = next_board
     

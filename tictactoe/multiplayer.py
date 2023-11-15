@@ -94,7 +94,11 @@ class TicTacToe:
         return self._board.count('1') == 9 and self.has_won() == -1
 
     def is_position_occupied(self, position):
-        return self._board[position] != '0'
+        occupied = False
+        if self._board[position % 9] == '1' or self._board[(position % 9) + 9] == '1':
+            occupied = True
+
+        return self._board[position] != '0' or occupied
     
     def valid_move(self, move):
         diff = strdiff(self._board, move)
