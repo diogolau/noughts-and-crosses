@@ -43,7 +43,10 @@ class Controller:
         sock = key.fileobj
         data = key.data
         if mask & selectors.EVENT_READ:
-            recv_data = sock.recv(1024)
+            try:
+                recv_data = sock.recv(1024)
+            except ConnectionResetError:
+                recv_data = 0
             if recv_data:
                 # Remember to pass the socket and data for each method.
                 # Be careful with how many bytes a socket will receive when using
@@ -61,6 +64,8 @@ class Controller:
     def play_game(self, socket, request, game, selector):
         try:
             response_dict = game.set_board(self.player_identifier[socket.fileno()], request["play"])
+            if len(self.player_identifier) != 2:
+                game.reset()
             response_b = dict_to_binary(response_dict)
             for key, event in selector.select():
                 socket = key.fileobj

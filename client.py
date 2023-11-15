@@ -35,9 +35,9 @@ try:
             response = binary_to_dict(response_binary)
             print(response)
             if "next_board" in response.keys():
-                print("tá aqui")
                 next_board = response["next_board"]
                 update_board(next_board)
+                color_the_board(response)
     
     create_thread(receive_data)
 
@@ -70,19 +70,12 @@ try:
         }
         request_b = dict_to_binary(request)
         client.send(request_b)
-        # # Altera o valor do botão entre 0 e 1
-        # board[index] = 1 if board[index] == 0 else 0
-        # # Atualiza o texto do botão com 'X' ou 'O' com base no novo valor
-        # botoes[row][col].config(text='X' if board[index] == 1 else 'O')
 
     def update_board(next_board_str):
         global board
         next_board = [*next_board_str]
 
-        for index, i in enumerate(next_board):
-            next_board[index] = int(i)
-        
-        for index, var in enumerate(next_board):
+        for index, button_state in enumerate(next_board):
             if index <= 8:
                 symbol = "X"
             else:
@@ -90,13 +83,27 @@ try:
 
             index_button = index % 9
 
-            row = math.floor(index_button/3)
-            col = index_button % 3
-            if var:
+            if int(button_state):
+                row = math.floor(index_button/3)
+                col = index_button % 3
+
                 buttons[row][col].config(text=symbol)
 
         board = next_board
     
+    def color_the_board(response):
+        if response["status"] != "00":
+            if response["status"] == "11":
+                pass
+            else:
+                buttons_to_color = [*response["colored_board"]]
+                
+                for index, button_state in enumerate(buttons_to_color):
+                    if int(button_state):
+                        row = math.floor(index/3)
+                        col = index % 3
+
+                        buttons[row][col].config(bg="green")
 
     root.mainloop()
 except KeyboardInterrupt:
