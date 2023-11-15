@@ -55,19 +55,19 @@ class TicTacToe:
         self._state = 'playing'
         self._board = '0' * 18
         
-    def row_filled(semi_board, positions=False):
+    def row_filled(self, semi_board, positions=False):
         for i in range(0, 9, 3):
             if semi_board[i] == semi_board[i + 1] == semi_board[i + 2] == '1':
                 return True if positions else i
         return False
 
-    def column_filled(semi_board, positions=False):
+    def column_filled(self, semi_board, positions=False):
         for i in range(3):
             if semi_board[i] == semi_board[i + 3] == semi_board[i + 6] == '1':
                 return True if positions else i
         return False
     
-    def diagonal_filled(semi_board, positions=False):
+    def diagonal_filled(self, semi_board, positions=False):
         if semi_board[0] == semi_board[4] == semi_board[8] == '1':
             return True if positions else 1
         if semi_board[2] == semi_board[4] == semi_board[6] == '1':
@@ -98,6 +98,7 @@ class TicTacToe:
     
     def valid_move(self, move):
         diff = strdiff(self._board, move)
+        print(len(diff))
         if len(diff) != 1:
             raise InvalidLength()
         if self.current_player() == 1 and diff[0] > 8:
@@ -136,11 +137,12 @@ class TicTacToe:
             if i == 1:
                 return replace_indexes(EMPTY_BOARD, [0, 4, 8], '1')
             return replace_indexes(EMPTY_BOARD, [2, 4, 6], '1')
+        return EMPTY_BOARD
     
     def build_response(self):
         next_board = self.get_board()
         status = self.get_status()
         colored_board = self.get_colored_board()
-        return json.dumps({'next_board': next_board, 'status': status, 'colored_board': colored_board})
+        return {'next_board': next_board, 'status': status, 'colored_board': colored_board}
 
 
