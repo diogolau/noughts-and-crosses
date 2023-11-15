@@ -2,12 +2,14 @@ import socket
 import sys
 import selectors
 from controller import Controller
+from tictactoe.multiplayer import TicTacToe
 
 
 def main():
-    initiate_server(sys.argv[1], sys.argv[2])
+    game = TicTacToe()
+    initiate_server(sys.argv[1], sys.argv[2], game)
 
-def initiate_server(host, port):
+def initiate_server(host, port, game):
     sel = selectors.DefaultSelector()
 
     HOST, PORT = host, int(port)
@@ -30,7 +32,7 @@ def initiate_server(host, port):
                     con.accept_wrapper(key.fileobj, events, sel)
                 else:
                     # con.service_connection(key, mask, sel)
-                    con.message_handler(key, mask, sel, events)
+                    con.message_handler(key, mask, sel, events, game)
     except KeyboardInterrupt:
         print("Exiting")
     finally:
