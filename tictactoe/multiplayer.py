@@ -1,7 +1,6 @@
 from utils.strdiff import strdiff
 from utils.str_replace import replace_indexes
 from errors.invalid_move import *
-import json
 
 EMPTY_BOARD = '0' * 9
 
@@ -45,8 +44,8 @@ class TicTacToe:
     def get_status(self):
         if self._state == 'won':
             if self.has_won() == 1:
-                return '01'
-            return '10'
+                return '10'
+            return '01'
         if self._state == 'draw':
             return '11'
         return '00'
@@ -58,20 +57,20 @@ class TicTacToe:
     def row_filled(self, semi_board, positions=False):
         for i in range(0, 9, 3):
             if semi_board[i] == semi_board[i + 1] == semi_board[i + 2] == '1':
-                return True if positions else i
+                return True if not positions else i
         return False
 
     def column_filled(self, semi_board, positions=False):
         for i in range(3):
             if semi_board[i] == semi_board[i + 3] == semi_board[i + 6] == '1':
-                return True if positions else i
+                return True if not positions else i
         return False
     
     def diagonal_filled(self, semi_board, positions=False):
         if semi_board[0] == semi_board[4] == semi_board[8] == '1':
-            return True if positions else 1
+            return True if not positions else 1
         if semi_board[2] == semi_board[4] == semi_board[6] == '1':
-            return True if positions else -1
+            return True if not positions else 0
         return False
     
     '''
@@ -80,7 +79,7 @@ class TicTacToe:
     Returns -1 if no one has won
     '''
     def has_won(self):
-        if self._state != 'playing':
+        if self._state != 'playing' and self._state != 'won':
             return -1
         board_x = self.get_x()
         board_o = self.get_o()
@@ -91,14 +90,17 @@ class TicTacToe:
         return -1
 
     def is_draw(self):
-        return self._board.count('1') == 9 and not self.has_won()
+        return self._board.count('1') == 9 and self.has_won() == -1
 
     def is_position_occupied(self, position):
-        return self._board[position] != '0'
+        occupied = False
+        if self._board[position % 9] == '1' or self._board[(position % 9) + 9] == '1':
+            occupied = True
+
+        return self._board[position] != '0' or occupied
     
     def valid_move(self, move):
         diff = strdiff(self._board, move)
-        print(len(diff))
         if len(diff) != 1:
             raise InvalidLength()
         if self.current_player() == 1 and diff[0] > 8:
@@ -126,6 +128,8 @@ class TicTacToe:
         if self._state != 'won':
             return '0' * 9
         semi_board = self.get_x() if self.has_won() == 1 else self.get_o()
+        print(f"Won: {self.has_won()}")
+        print(f"Row: {self.row_filled(semi_board)}\nColumn: {self.column_filled(semi_board)}\nDiagonal: {self.diagonal_filled(semi_board)}")
         if self.row_filled(semi_board):
             i = self.row_filled(semi_board, True)
             return replace_indexes(EMPTY_BOARD, [i, i + 1, i + 2], '1')
@@ -134,7 +138,7 @@ class TicTacToe:
             return replace_indexes(EMPTY_BOARD, [i, i + 3, i + 6], '1')
         if self.diagonal_filled(semi_board):
             i = self.diagonal_filled(semi_board, True)
-            if i == 1:
+            if i:
                 return replace_indexes(EMPTY_BOARD, [0, 4, 8], '1')
             return replace_indexes(EMPTY_BOARD, [2, 4, 6], '1')
         return EMPTY_BOARD
