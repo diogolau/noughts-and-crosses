@@ -1,8 +1,7 @@
 import selectors
 import types
-import json
 from utils.json_utils import binary_to_dict, dict_to_binary
-from errors.invalid_move import InvalidMove, InvalidLength, InvalidPlayer, InvalidPosition
+from errors.invalid_move import InvalidLength, InvalidPlayer, InvalidPosition
 
 class Controller:
     connection_limit = 2
@@ -13,6 +12,9 @@ class Controller:
         self.player_identifier = {}
 
     def accept_wrapper(self, sock, events, selector):
+        '''
+        Accepts a new connection if the limit has not been reached, or rejects it otherwise.
+        '''
         if len(events) < Controller.connection_limit + 1:
             conn, addr = sock.accept()
             self.player_identifier[conn.fileno()] = Controller.symbols[0]
@@ -40,6 +42,9 @@ class Controller:
             conn.close()
     
     def message_handler(self, key, mask, selector, events, game, is_multiplayer=True):
+        '''
+        Handle all messages sent by a socket, executing a new move or closing the connection with a client's socket.
+        '''
         sock = key.fileobj
         data = key.data
         if mask & selectors.EVENT_READ:
@@ -79,6 +84,9 @@ class Controller:
 
 
     def play_game(self, socket, request, game, selector, is_multiplayer):
+        '''
+        Executes a new move in the game.
+        '''
         try:
             response_dict = game.set_board(self.player_identifier[socket.fileno()], request["play"])
             self.server_state = response_dict["next_board"]

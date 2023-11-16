@@ -1,6 +1,5 @@
 import socket
 from utils.json_utils import dict_to_binary, binary_to_dict
-import json
 import tkinter as tk
 import threading
 import math
@@ -11,24 +10,39 @@ CONNECTION_ESTABLISHED = False
 
 try:
     def create_thread(target):
+        '''
+        General function that creates a new thread.
+        '''
         thread = threading.Thread(target=target)
         thread.daemon = True
         thread.start()
     
+
+    # Configuration of the client socket and connecting it to the server
     client = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
     client.connect((HOST, PORT))
+
+    # Receiving the config information from the server
     json_config = client.recv(1024)
     json_message = binary_to_dict(json_config)
+    
+    # End client's program execution if connection couldn't be established
     if not json_message["connection"]:
         raise KeyboardInterrupt
     
+
+    # Set the token to the client
     token = json_message["token"]
     print(f"My token is: {token}")
+
     CONNECTION_ESTABLISHED = True
     
     next_board = "000000000000000000"
 
     def receive_data():
+        '''
+        Function that will be responsible for receive messages sent by the server.
+        '''
         global next_board
         while True:
             response_binary = client.recv(1024)
@@ -37,13 +51,15 @@ try:
             update_board(next_board)
             color_the_board(response)
     
+    # Start the receive_data in another thread
     create_thread(receive_data)
 
+    # Creates the tkinter window and start the board
     root = tk.Tk()
-
     root.title("Jogo da Velha")
     board = [0] * 18
 
+    # Set up buttons for tic tac toe
     buttons = []
     for i in range(3):
         row = []
@@ -55,6 +71,9 @@ try:
         buttons.append(row)
 
     def play(row, col):
+        '''
+        Handle a new move and send it to server.
+        '''
         global token
         index = 3 * row + col - 9 * (token-1)
         play_board = board.copy()
@@ -70,6 +89,9 @@ try:
         client.send(request_b)
 
     def update_board(next_board_str):
+        '''
+        Update the board when receive a message from the server.
+        '''
         global board
         print(next_board_str)
         next_board = [*next_board_str]
@@ -103,6 +125,9 @@ try:
         board = next_board
     
     def color_the_board(response):
+        '''
+        Color the board if is the case.
+        '''
         if response["status"] != "00":
             if response["status"] == "11":
                 pass
