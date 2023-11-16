@@ -67,7 +67,7 @@ try:
     for i in range(3):
         row = []
         for j in range(3):
-            btn = tk.Button(root, text='', font=('normal', 14), width=5, height=2,
+            btn = tk.Button(root, text='', bg="white", font=('normal', 14), width=5, height=2,
                             command=lambda row=i, col=j: play(row, col))
             btn.grid(row=i, column=j)
             row.append(btn)
