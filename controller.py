@@ -70,7 +70,7 @@ class Controller:
                 self.server_state = game.get_board()
                 response_dict = {
                     "next_board": self.server_state,
-                    "status": "00",
+                    "status": "1",
                     "colored_board": "000000000"
                 }
                 response_b = dict_to_binary(response_dict)
@@ -95,6 +95,7 @@ class Controller:
                 self.server_state = '0' * 18
                 response_dict["next_board"] = self.server_state
                 response_dict["status"] = "00"
+            print(f"Successful response: {response_dict}")
             response_b = dict_to_binary(response_dict)
             for key, event in selector.select():
                 socket = key.fileobj
@@ -105,21 +106,24 @@ class Controller:
                 "status": -1, 
                 "colored_board": "000000000"
             }
+            print(f"Invalid Length: {error_message}")
             response = dict_to_binary(error_message)
             socket.send(response)
         except InvalidPlayer:
             error_message = {
                 "next_board": self.server_state, 
-                "status": -1, 
+                "status": -2, 
                 "colored_board": "000000000"
             }
+            print(f"Invalid Player: {error_message}")
             response = dict_to_binary(error_message)
             socket.send(response)
         except InvalidPosition:
             error_message = {
                 "next_board": self.server_state, 
-                "status": -1, 
+                "status": -3, 
                 "colored_board": "000000000"
             }
+            print(f"Invalid Position: {error_message}")
             response = dict_to_binary(error_message)
             socket.send(response)

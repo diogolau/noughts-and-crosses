@@ -1,7 +1,6 @@
 from utils.strdiff import strdiff
 from utils.str_replace import replace_indexes
 from errors.invalid_move import *
-import json
 
 EMPTY_BOARD = '0' * 9
 
@@ -126,12 +125,10 @@ class TicTacToe:
         return self.build_response()
     
     def get_colored_board(self):
-        print(self._state)
         if self._state != 'won':
             return '0' * 9
         semi_board = self.get_x() if self.has_won() == 1 else self.get_o()
         print(f"Won: {self.has_won()}")
-        print(semi_board)
         print(f"Row: {self.row_filled(semi_board)}\nColumn: {self.column_filled(semi_board)}\nDiagonal: {self.diagonal_filled(semi_board)}")
         if self.row_filled(semi_board):
             i = self.row_filled(semi_board, True)

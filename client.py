@@ -3,9 +3,10 @@ from utils.json_utils import dict_to_binary, binary_to_dict
 import tkinter as tk
 import threading
 import math
+import sys
 
-HOST = "127.0.0.1"
-PORT = 60000
+HOST = sys.argv[1]
+PORT = int(sys.argv[2])
 CONNECTION_ESTABLISHED = False
 
 try:
@@ -33,7 +34,6 @@ try:
 
     # Set the token to the client
     token = json_message["token"]
-    print(f"My token is: {token}")
 
     CONNECTION_ESTABLISHED = True
     
@@ -49,14 +49,17 @@ try:
             response = binary_to_dict(response_binary)
             next_board = response["next_board"]
             update_board(next_board)
-            color_the_board(response)
+            if response["status"] == "1":
+                color_the_board(response, reset=True)
+            else:
+                color_the_board(response)
     
     # Start the receive_data in another thread
     create_thread(receive_data)
 
     # Creates the tkinter window and start the board
     root = tk.Tk()
-    root.title("Jogo da Velha")
+    root.title(f"Jogo da Velha - Jogador {token if token else 2}")
     board = [0] * 18
 
     # Set up buttons for tic tac toe
@@ -93,7 +96,6 @@ try:
         Update the board when receive a message from the server.
         '''
         global board
-        print(next_board_str)
         next_board = [*next_board_str]
 
         board_x = next_board[:9]
@@ -124,10 +126,19 @@ try:
 
         board = next_board
     
-    def color_the_board(response):
+    def color_the_board(response, reset=False):
         '''
         Color the board if is the case.
         '''
+        if reset:
+            buttons_to_color = [*response["colored_board"]]
+
+            for index, button_state in enumerate(buttons_to_color):
+                row = math.floor(index/3)
+                col = index % 3
+
+                buttons[row][col].config(bg="white")
+
         if response["status"] != "00":
             if response["status"] == "11":
                 pass
